@@ -1,6 +1,32 @@
+function isValidSudoku(board) {
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      if (board[i][j] !== 0) {
+        const temp = board[i][j];
+        board[i][j] = 0;
+        if (!isValid(board, i, j, temp)) {
+          board[i][j] = temp; // Restore the number
+          return false;
+        }
+        board[i][j] = temp; // Restore the number
+      }
+    }
+  }
+  return true;
+}
+
 // Return board or null if solution doesn't exist
-function solveSudoku(board) {
-  if (solve(board)) {
+function solveSudoku(board, timeout = 5000) {
+  const startTime = Date.now();
+
+  function solveWithTimeout() {
+    if (Date.now() - startTime > timeout) {
+      throw new Error("Timeout");
+    }
+    return solve(board);
+  }
+
+  if (solveWithTimeout()) {
     return board;
   } else {
     return null;
@@ -65,14 +91,23 @@ for (let i = 0; i < 9; i++) {
   }
 }
 
-// Solve button function
 solveBtn.onclick = function () {
   const board = getBoardFromInputs();
-  const solvedBoard = solveSudoku(board);
-  if (solvedBoard) {
-    updateInputsFromBoard(solvedBoard);
-  } else {
-    alert("No solution for the given board");
+
+  if (!isValidSudoku(board)) {
+    alert("The sudoku configuration is invalid, it cannot be solved.");
+    return;
+  }
+
+  try {
+    const solvedBoard = solveSudoku(board);
+    if (solvedBoard) {
+      updateInputsFromBoard(solvedBoard);
+    }
+  } catch (error) {
+    if (error.message === "Timeout") {
+      alert("The solver took too long. The puzzle might be unsolvable.");
+    }
   }
 };
 
